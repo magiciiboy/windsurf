@@ -52,8 +52,15 @@ STANDARDS = {
         "standard": False,
         "severity": SEVERITY_CRITICAL,
         "description": "Project MUST NOT use conda",
-        "recommendation": "Remove conda dependencies and use pip instead",
+        "recommendation": "Remove conda dependencies and use uv, poetry, or pip instead",
         "standard_type": "dependency"
+    },
+    "lock_file": {
+        "standard": True,
+        "severity": SEVERITY_RECOMMENDATION,
+        "description": "Project SHOULD have a lock file (poetry.lock, pip-tools requirements.in, requirements.txt)",
+        "recommendation": "Create a lock file to ensure consistent dependency versions across environments",
+        "standard_type": "file"
     }
 }
 
@@ -102,6 +109,7 @@ class GitLabChecker:
         pyproject_toml = self._check_pyproject_toml(project_id)
         has_makefile = self._check_makefile(project_id)
         uses_conda = self._check_conda_usage(project_id)
+        has_lock_file = self._check_lock_file(project_id)
         
         standards = {
             "python_version": {
@@ -135,12 +143,33 @@ class GitLabChecker:
                 "recommendation": STANDARDS["no_conda"]["recommendation"],
                 "meets_standard": not uses_conda,
                 "detected_version": "not found" if not uses_conda else "found conda usage"
+            },
+            "lock_file": {
+                "standard": STANDARDS["lock_file"]["standard"],
+                "severity": STANDARDS["lock_file"]["severity"],
+                "description": STANDARDS["lock_file"]["description"],
+                "recommendation": STANDARDS["lock_file"]["recommendation"],
+                "meets_standard": has_lock_file,
+                "detected_version": "present" if has_lock_file else "not found"
             }
         }
         
         if output_format == FORMAT_CHECKLIST:
             return self.format_checklist(standards)
         return standards
+
+    def _check_lock_file(self, project_id: str) -> bool:
+        """Check if project has a lock file (requirements.txt, poetry.lock, or pip-tools requirements.in)."""
+        files = self.get_repository_files(project_id)
+        
+        # Check for common lock files
+        lock_files = [
+            "requirements.txt",
+            "poetry.lock",
+            "requirements.in"  # pip-tools
+        ]
+        
+        return any(file in files for file in lock_files)
 
     def _check_makefile(self, project_id: str) -> bool:
         """Check if project has a Makefile at root level."""
