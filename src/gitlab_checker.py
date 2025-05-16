@@ -28,8 +28,8 @@ class GitLabChecker:
                 file_path="pyproject.toml", ref="main"
             ).decode()
             toml_data = pytoml.loads(content)
-            if "tool" in toml_data and "poetry" in toml_data["tool"]:
-                return toml_data["tool"]["poetry"]["python"]
+            if "project" in toml_data and "requires-python" in toml_data["project"]:
+                return toml_data["project"]["requires-python"]
 
         # Check setup.py
         if "setup.py" in files:

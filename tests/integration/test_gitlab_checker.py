@@ -3,22 +3,27 @@ import json
 import pytest
 from src.gitlab_checker import GitLabChecker
 
-# Add your test GitLab project ID here
-TEST_PROJECT_ID = "your-test-project-id"
-
 @pytest.fixture
 def gitlab_checker():
     """Create a GitLabChecker instance using test environment variables."""
-    token = os.getenv("GITLAB_TEST_TOKEN")
-    url = os.getenv("GITLAB_TEST_URL", "https://gitlab.com")
+    token = os.getenv("GITLAB_TEST_TOKEN") or os.getenv("GITLAB_TOKEN")
+    url = os.getenv("GITLAB_TEST_URL") or os.getenv("GITLAB_URL", "https://gitlab.com")
     if not token:
-        pytest.skip("GITLAB_TEST_TOKEN environment variable not set")
+        pytest.skip("GITLAB_TEST_TOKEN or GITLAB_TOKEN environment variable not set")
     return GitLabChecker(gitlab_url=url, private_token=token)
 
-def test_check_standards(gitlab_checker):
+@pytest.fixture
+def test_project_id():
+    """Get test project ID from environment variables."""
+    return os.getenv("GITLAB_TEST_PROJECT_ID") or os.getenv("GITLAB_PROJECT_ID")
+
+def test_check_standards(gitlab_checker, test_project_id):
     """Test checking standards on a test project."""
+    if not test_project_id:
+        pytest.skip("GITLAB_TEST_PROJECT_ID or GITLAB_PROJECT_ID environment variable not set")
+    
     try:
-        standards = gitlab_checker.check_standards(TEST_PROJECT_ID)
+        standards = gitlab_checker.check_standards(test_project_id)
         assert isinstance(standards, dict)
         assert "python_version" in standards
         assert "pyproject_toml" in standards
@@ -36,10 +41,13 @@ def test_check_standards(gitlab_checker):
     except Exception as e:
         pytest.fail(f"Unexpected error: {str(e)}")
 
-def test_get_repository_files(gitlab_checker):
+def test_get_repository_files(gitlab_checker, test_project_id):
     """Test getting repository files."""
+    if not test_project_id:
+        pytest.skip("GITLAB_TEST_PROJECT_ID or GITLAB_PROJECT_ID environment variable not set")
+    
     try:
-        files = gitlab_checker.get_repository_files(TEST_PROJECT_ID)
+        files = gitlab_checker.get_repository_files(test_project_id)
         assert isinstance(files, list)
         assert len(files) > 0
     except Exception as e:

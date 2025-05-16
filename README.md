@@ -39,7 +39,7 @@ python src/gitlab_checker.py <project_id> [--token <gitlab_token>] [--url <gitla
 ```bash
 export GITLAB_TOKEN=your_token_here
 export GITLAB_URL=your_gitlab_url
-```
+````
 
 ## Standards Checked
 
@@ -51,11 +51,20 @@ export GITLAB_URL=your_gitlab_url
 To run integration tests:
 
 ```bash
-export GITLAB_TEST_TOKEN=your_test_token
-export GITLAB_TEST_URL=your_test_gitlab_url
-export GITLAB_TEST_PROJECT_ID=your_test_project_id
+# Set GitLab credentials
+export GITLAB_TOKEN=your_token  # or GITLAB_TEST_TOKEN
+export GITLAB_URL=your_gitlab_url  # or GITLAB_TEST_URL
+
+# Set test project ID
+export GITLAB_PROJECT_ID=your_project_id  # or GITLAB_TEST_PROJECT_ID
+
 pytest tests/integration/
 ```
+
+The tests will use the first available environment variable in the following order:
+- For token: GITLAB_TEST_TOKEN (preferred) or GITLAB_TOKEN
+- For URL: GITLAB_TEST_URL (preferred) or GITLAB_URL
+- For project ID: GITLAB_TEST_PROJECT_ID (preferred) or GITLAB_PROJECT_ID
 
 ## Example Output
 
