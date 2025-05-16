@@ -1,7 +1,7 @@
 import os
 import json
 import pytest
-from gitlab_checker import GitLabChecker
+from python_standards_checker import GitLabChecker
 
 @pytest.fixture
 def gitlab_checker():
