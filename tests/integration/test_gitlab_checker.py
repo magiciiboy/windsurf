@@ -52,7 +52,9 @@ def test_check_standards(gitlab_checker, test_project_id):
         
         for spec, expected in version_specifications:
             python_version["detected_version"] = spec
-            assert python_version["meets_standard"] == expected
+            # Use the public function for testing
+            meets_standard = checker.is_version_supported(spec)
+            assert meets_standard == expected
         
         pyproject_toml = standards["pyproject_toml"]
         assert isinstance(pyproject_toml, dict)

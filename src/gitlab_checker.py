@@ -83,7 +83,7 @@ class GitLabChecker:
         standards = {
             "python_version": {
                 "standard": ">=3.9",
-                "meets_standard": python_version and self._is_version_supported(python_version),
+                "meets_standard": python_version and self.is_version_supported(python_version),
                 "detected_version": python_version
             },
             "pyproject_toml": {
