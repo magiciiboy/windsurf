@@ -39,11 +39,15 @@ def test_check_standards(gitlab_checker, test_project_id):
             (">=3.9", True),
             (">3.9", True),
             ("~=3.9", True),
+            ("~=3.10", True),
             ("~=3.8", False),
             ("<3.9", False),
             ("<=3.9", False),
-            ("==3.9", False),
-            ("!=3.9", True)
+            ("==3.9", True),
+            ("!=3.8", True),
+            ("^3.9", True),
+            (">=3.10", True),
+            (">=3.8", False)
         ]
         
         for spec, expected in version_specifications:

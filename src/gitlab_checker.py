@@ -62,6 +62,19 @@ class GitLabChecker:
 
         return None
 
+    def is_version_supported(self, version_spec: str) -> bool:
+        """Check if a version specification meets the minimum requirement."""
+        # Extract version number from specifiers like ~=3.12, >=3.9, etc.
+        match = re.search(r'[~>=<]*([0-9]+\.[0-9]+)', version_spec)
+        if not match:
+            return False
+            
+        version_number = match.group(1)
+        try:
+            return version.parse(version_number) >= version.parse("3.9")
+        except:
+            return False
+
     def check_standards(self, project_id: str) -> Dict:
         """Check repository against defined standards."""
         files = self.get_repository_files(project_id)
@@ -70,7 +83,7 @@ class GitLabChecker:
         standards = {
             "python_version": {
                 "standard": ">=3.9",
-                "meets_standard": python_version and version.parse(python_version) >= version.parse("3.9"),
+                "meets_standard": python_version and self._is_version_supported(python_version),
                 "detected_version": python_version
             },
             "pyproject_toml": {
