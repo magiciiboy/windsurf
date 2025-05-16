@@ -43,7 +43,7 @@ export GITLAB_URL=your_gitlab_url
 
 ## Standards Checked
 
-1. Python version > 3.8
+1. Python version >= 3.9
 2. Project has specification in pyproject.toml file
 
 ## Testing

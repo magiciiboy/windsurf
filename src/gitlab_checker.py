@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 import gitlab
 from gitlab.v4.objects import Project
 import pytoml
+from packaging import version
 
 class GitLabChecker:
     def __init__(self, gitlab_url: Optional[str] = None, private_token: Optional[str] = None):
@@ -68,8 +69,8 @@ class GitLabChecker:
         
         standards = {
             "python_version": {
-                "standard": ">3.8",
-                "meets_standard": python_version and float(python_version) > 3.8,
+                "standard": ">=3.9",
+                "meets_standard": python_version and version.parse(python_version) >= version.parse("3.9"),
                 "detected_version": python_version
             },
             "pyproject_toml": {

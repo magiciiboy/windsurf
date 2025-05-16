@@ -34,6 +34,22 @@ def test_check_standards(gitlab_checker, test_project_id):
         assert "meets_standard" in python_version
         assert "detected_version" in python_version
         
+        # Test various Python version specifications
+        version_specifications = [
+            (">=3.9", True),
+            (">3.9", True),
+            ("~=3.9", True),
+            ("~=3.8", False),
+            ("<3.9", False),
+            ("<=3.9", False),
+            ("==3.9", False),
+            ("!=3.9", True)
+        ]
+        
+        for spec, expected in version_specifications:
+            python_version["detected_version"] = spec
+            assert python_version["meets_standard"] == expected
+        
         pyproject_toml = standards["pyproject_toml"]
         assert isinstance(pyproject_toml, dict)
         assert "standard" in pyproject_toml
