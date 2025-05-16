@@ -11,17 +11,37 @@ from packaging import version
 # ANSI color codes for terminal output
 CHECKMARK = "\u2713"  # ✓
 CROSS = "\u2717"     # ✗
+WARNING = "\u26A0"   # ⚠
 GREEN = "\033[92m"
 RED = "\033[91m"
+ORANGE = "\033[33m"
 RESET = "\033[0m"
 
 # Output formats
 FORMAT_JSON = "json"
 FORMAT_CHECKLIST = "checklist"
 
-# Standards
-PYTHON_VERSION_STANDARD = ">=3.9"
-PYPROJECT_TOML_STANDARD = True
+# Severity levels
+SEVERITY_CRITICAL = "CRITICAL"
+SEVERITY_RECOMMENDATION = "RECOMMENDATION"
+
+# Standards with severity and descriptions
+STANDARDS = {
+    "python_version": {
+        "standard": ">=3.9",
+        "severity": SEVERITY_CRITICAL,
+        "description": "Python version must be at least 3.9",
+        "recommendation": "Update your project's Python version requirement to at least 3.9",
+        "standard_type": "version"
+    },
+    "pyproject_toml": {
+        "standard": True,
+        "severity": SEVERITY_RECOMMENDATION,
+        "description": "Project should have a pyproject.toml specification",
+        "recommendation": "Create a pyproject.toml file to specify project metadata and dependencies",
+        "standard_type": "file"
+    }
+}
 
 class GitLabChecker:
     def __init__(self, gitlab_url: Optional[str] = None, private_token: Optional[str] = None):
@@ -32,37 +52,59 @@ class GitLabChecker:
         """Format standards as a checklist with colored checkmarks/crosses."""
         output = []
         
-        # Format Python version check
-        python_version = standards["python_version"]
-        version_check = self._format_check(python_version["meets_standard"])
-        output.append(f"Python version {python_version['detected_version'] or 'not found'} {version_check}")
-        
-        # Format pyproject.toml check
-        pyproject = standards["pyproject_toml"]
-        pyproject_check = self._format_check(pyproject["meets_standard"])
-        output.append(f"pyproject.toml specification {pyproject_check}")
+        for std_name, std_data in standards.items():
+            # Get standard info from STANDARDS dictionary
+            std_info = STANDARDS[std_name]
+            
+            # Format the check mark with appropriate color and symbol
+            if std_data["meets_standard"]:
+                check = f"{GREEN}{CHECKMARK}{RESET}"
+            else:
+                if std_info["severity"] == SEVERITY_CRITICAL:
+                    check = f"{RED}{CROSS}{RESET}"
+                else:  # RECOMMENDATION
+                    check = f"{ORANGE}{WARNING}{RESET}"
+            
+            # Format the standard line
+            output.append(f"[{check}] {std_info['description']}")
+            
+            # Add recommendation if standard is not met
+            if not std_data["meets_standard"]:
+                output.append(f"  • {std_info['recommendation']}")
         
         return "\n".join(output)
 
-    def _format_check(self, meets_standard: bool) -> str:
+    def _format_check(self, meets_standard: bool, severity: str) -> str:
         """Format a single check with colored checkmark/cross."""
         if meets_standard:
             return f"{GREEN}{CHECKMARK}{RESET}"
-        return f"{RED}{CROSS}{RESET}"
+        if severity == SEVERITY_CRITICAL:
+            return f"{RED}{CROSS}{RESET}"
+        return f"{ORANGE}{WARNING}{RESET}"
 
     def check_standards(self, project_id: str, output_format: str = FORMAT_JSON) -> Union[Dict, str]:
         """Check Python standards in a GitLab project and return results in specified format."""
         python_version = self.get_python_version(project_id)
         pyproject_toml = self._check_pyproject_toml(project_id)
         
+        # Get standard info from STANDARDS dictionary
+        python_std = STANDARDS["python_version"]
+        toml_std = STANDARDS["pyproject_toml"]
+        
         standards = {
             "python_version": {
-                "standard": PYTHON_VERSION_STANDARD,
+                "standard": python_std["standard"],
+                "severity": python_std["severity"],
+                "description": python_std["description"],
+                "recommendation": python_std["recommendation"],
                 "meets_standard": python_version and self.is_version_supported(python_version),
                 "detected_version": python_version
             },
             "pyproject_toml": {
-                "standard": PYPROJECT_TOML_STANDARD,
+                "standard": toml_std["standard"],
+                "severity": toml_std["severity"],
+                "description": toml_std["description"],
+                "recommendation": toml_std["recommendation"],
                 "meets_standard": pyproject_toml,
                 "detected_version": "present" if pyproject_toml else "not found"
             }
