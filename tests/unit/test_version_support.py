@@ -1,5 +1,5 @@
 import pytest
-from src.gitlab_checker import GitLabChecker
+from gitlab_checker import GitLabChecker
 
 @pytest.mark.parametrize(
     "version_spec, expected",

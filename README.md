@@ -6,8 +6,9 @@ A CLI tool to check GitLab repositories against defined Python standards.
 
 ```
 src/
-├── gitlab_checker.py
-├── __init__.py
+└── gitlab_checker/
+    ├── __init__.py
+    
 
 tests/
 ├── unit/
@@ -15,20 +16,29 @@ tests/
 │   └── test_gitlab_checker.py
 └── __init__.py
 
-requirements.txt
+pyproject.toml
+hatch.toml
 README.md
 ```
 
 ## Installation
 
 ```bash
-pip install -r requirements.txt
+# Using Makefile
+make venv    # Create virtual environment
+make install # Install dependencies
+
+# Or manually
+pip install -e .
+
+# Or install the package
+pip install .
 ```
 
 ## Usage
 
 ```bash
-python src/gitlab_checker.py <project_id> [--token <gitlab_token>] [--url <gitlab_url>]
+gitlab-checker <project_id> [--token <gitlab_token>] [--url <gitlab_url>]
 ```
 
 ### Environment Variables
@@ -45,6 +55,10 @@ export GITLAB_URL=your_gitlab_url
 
 1. Python version >= 3.9
 2. Project has specification in pyproject.toml file
+
+## Package Management
+
+The project uses pyproject.toml for package management with pip as the package manager. The project is configured to use hatch as the build system, providing a modern and flexible way to manage Python packages while maintaining pip compatibility.
 
 ## Testing
 

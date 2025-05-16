@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gitlab-checker"
+version = "0.1.0"
+description = "CLI tool to check GitLab repositories against Python standards"
+requires-python = ">=3.9"
+dependencies = [
+    "python-gitlab>=3.0.0",
+    "python-dotenv>=1.0.0",
+    "pytoml>=0.1.21",
+    "requests>=2.31.0",
+    "pytest>=7.4.0",
+    "packaging>=23.0"
+]
+
+[project.scripts]
+gitlab-checker = "gitlab_checker:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gitlab_checker"]

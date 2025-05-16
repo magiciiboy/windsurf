@@ -1,0 +1,8 @@
+[build]
+target = "wheel"
+
+[env]
+python = "3.11"
+
+[env.virtualenv]
+create = true
