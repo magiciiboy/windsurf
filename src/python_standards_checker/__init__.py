@@ -30,28 +30,28 @@ STANDARDS = {
     "python_version": {
         "standard": ">=3.9",
         "severity": SEVERITY_CRITICAL,
-        "description": "Python version must be at least 3.9",
+        "description": "Python version MUST be at least 3.9",
         "recommendation": "Update your project's Python version requirement to at least 3.9",
         "standard_type": "version"
     },
     "pyproject_toml": {
         "standard": True,
         "severity": SEVERITY_RECOMMENDATION,
-        "description": "Project should have a pyproject.toml specification",
+        "description": "Project SHOULD have a pyproject.toml specification",
         "recommendation": "Create a pyproject.toml file to specify project metadata and dependencies",
         "standard_type": "file"
     },
     "makefile": {
         "standard": True,
         "severity": SEVERITY_RECOMMENDATION,
-        "description": "Project should have Makefile at root level",
+        "description": "Project SHOULD have Makefile at root level",
         "recommendation": "Create a Makefile at the root of your project to define build and automation targets",
         "standard_type": "file"
     },
     "no_conda": {
         "standard": False,
         "severity": SEVERITY_CRITICAL,
-        "description": "Project must not use conda",
+        "description": "Project MUST NOT use conda",
         "recommendation": "Remove conda dependencies and use pip instead",
         "standard_type": "dependency"
     }
@@ -172,7 +172,7 @@ class GitLabChecker:
                 content = self.gl.projects.get(project_id).files.get(
                     file_path=ci_file, ref="main"
                 ).decode()
-                if "conda" in content.lower():
+                if content and b"conda" in content.lower():
                     return True
         
         # Check shell scripts for conda commands
@@ -182,7 +182,7 @@ class GitLabChecker:
                     content = self.gl.projects.get(project_id).files.get(
                         file_path=file, ref="main"
                     ).decode()
-                    if "conda" in content.lower():
+                    if content and b"conda" in content.lower():
                         return True
                 except Exception:
                     continue
