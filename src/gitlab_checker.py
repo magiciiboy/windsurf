@@ -8,8 +8,9 @@ from gitlab.v4.objects import Project
 import pytoml
 
 class GitLabChecker:
-    def __init__(self, gitlab_url: str = "https://gitlab.com", private_token: Optional[str] = None):
-        self.gl = gitlab.Gitlab(gitlab_url, private_token=private_token)
+    def __init__(self, gitlab_url: Optional[str] = None, private_token: Optional[str] = None):
+        self.gitlab_url = gitlab_url or os.getenv("GITLAB_URL", "https://gitlab.com")
+        self.gl = gitlab.Gitlab(self.gitlab_url, private_token=private_token)
 
     def get_repository_files(self, project_id: str) -> List[str]:
         """Get list of files from GitLab repository."""
@@ -83,17 +84,19 @@ def main():
     parser = argparse.ArgumentParser(description="Check GitLab repository against Python standards")
     parser.add_argument("project_id", help="GitLab project ID or URL")
     parser.add_argument("--token", help="GitLab private token")
+    parser.add_argument("--url", help="GitLab instance URL")
     
     args = parser.parse_args()
 
     # Get token from environment variable if not provided as argument
     token = args.token or os.getenv("GITLAB_TOKEN")
+    url = args.url or os.getenv("GITLAB_URL")
     
     if not token:
         print("Error: GitLab token is required. Please provide it via --token or GITLAB_TOKEN environment variable.")
         return
 
-    checker = GitLabChecker(private_token=token)
+    checker = GitLabChecker(gitlab_url=url, private_token=token)
     
     try:
         standards = checker.check_standards(args.project_id)
