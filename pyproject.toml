@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-standards-checker"
@@ -19,5 +19,7 @@ dependencies = [
 [project.scripts]
 python-standards-checker = "python_standards_checker:main"
 
-[tool.hatch.build.targets.wheel]
+[tool.setuptools]
 packages = ["python_standards_checker"]
+include-package-data = true
+zip-safe = false

@@ -1,10 +1,11 @@
-.PHONY: help venv install test clean
+.PHONY: help venv install test clean build
 
 help:
 	@echo "Available commands:"
 	@echo "  make venv    - Create a Python 3.11 virtual environment"
 	@echo "  make install - Install dependencies in development mode"
 	@echo "  make test    - Run all tests with pytest"
+	@echo "  make build   - Build distribution packages"
 	@echo "  make clean   - Clean up build artifacts and caches"
 
 venv:
@@ -13,15 +14,20 @@ venv:
 	@echo "Virtual environment created."
 	@echo "Activate with: source .venv/bin/activate"
 
-install:
+install: venv
 	@echo "Installing dependencies in development mode..."
 	source .venv/bin/activate && pip install -e .
 	@echo "Dependencies installed."
 
-test:
+test: install
 	@echo "Running tests with pytest..."
 	source .venv/bin/activate && pytest -v
 	@echo "Tests completed."
+
+build: install
+	@echo "Building distribution packages..."
+	source .venv/bin/activate && python setup.py sdist bdist_wheel
+	@echo "Build completed."
 
 clean:
 	@echo "Cleaning up build artifacts and caches..."
@@ -32,4 +38,5 @@ clean:
 	rm -rf dist
 	rm -rf build
 	rm -rf *.egg-info
+	rm -rf python_standards_checker.egg-info
 	@echo "Cleanup completed."
