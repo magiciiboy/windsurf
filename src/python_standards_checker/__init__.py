@@ -40,6 +40,20 @@ STANDARDS = {
         "description": "Project should have a pyproject.toml specification",
         "recommendation": "Create a pyproject.toml file to specify project metadata and dependencies",
         "standard_type": "file"
+    },
+    "makefile": {
+        "standard": True,
+        "severity": SEVERITY_RECOMMENDATION,
+        "description": "Project should have Makefile at root level",
+        "recommendation": "Create a Makefile at the root of your project to define build and automation targets",
+        "standard_type": "file"
+    },
+    "no_conda": {
+        "standard": False,
+        "severity": SEVERITY_CRITICAL,
+        "description": "Project must not use conda",
+        "recommendation": "Remove conda dependencies and use pip instead",
+        "standard_type": "dependency"
     }
 }
 
@@ -70,7 +84,7 @@ class GitLabChecker:
             
             # Add recommendation if standard is not met
             if not std_data["meets_standard"]:
-                output.append(f"  • {std_info['recommendation']}")
+                output.append(f"    - Suggestion: {std_info['recommendation']}")
         
         return "\n".join(output)
 
@@ -86,33 +100,94 @@ class GitLabChecker:
         """Check Python standards in a GitLab project and return results in specified format."""
         python_version = self.get_python_version(project_id)
         pyproject_toml = self._check_pyproject_toml(project_id)
-        
-        # Get standard info from STANDARDS dictionary
-        python_std = STANDARDS["python_version"]
-        toml_std = STANDARDS["pyproject_toml"]
+        has_makefile = self._check_makefile(project_id)
+        uses_conda = self._check_conda_usage(project_id)
         
         standards = {
             "python_version": {
-                "standard": python_std["standard"],
-                "severity": python_std["severity"],
-                "description": python_std["description"],
-                "recommendation": python_std["recommendation"],
+                "standard": STANDARDS["python_version"]["standard"],
+                "severity": STANDARDS["python_version"]["severity"],
+                "description": STANDARDS["python_version"]["description"],
+                "recommendation": STANDARDS["python_version"]["recommendation"],
                 "meets_standard": python_version and self.is_version_supported(python_version),
                 "detected_version": python_version
             },
             "pyproject_toml": {
-                "standard": toml_std["standard"],
-                "severity": toml_std["severity"],
-                "description": toml_std["description"],
-                "recommendation": toml_std["recommendation"],
+                "standard": STANDARDS["pyproject_toml"]["standard"],
+                "severity": STANDARDS["pyproject_toml"]["severity"],
+                "description": STANDARDS["pyproject_toml"]["description"],
+                "recommendation": STANDARDS["pyproject_toml"]["recommendation"],
                 "meets_standard": pyproject_toml,
                 "detected_version": "present" if pyproject_toml else "not found"
+            },
+            "makefile": {
+                "standard": STANDARDS["makefile"]["standard"],
+                "severity": STANDARDS["makefile"]["severity"],
+                "description": STANDARDS["makefile"]["description"],
+                "recommendation": STANDARDS["makefile"]["recommendation"],
+                "meets_standard": has_makefile,
+                "detected_version": "present" if has_makefile else "not found"
+            },
+            "no_conda": {
+                "standard": STANDARDS["no_conda"]["standard"],
+                "severity": STANDARDS["no_conda"]["severity"],
+                "description": STANDARDS["no_conda"]["description"],
+                "recommendation": STANDARDS["no_conda"]["recommendation"],
+                "meets_standard": not uses_conda,
+                "detected_version": "not found" if not uses_conda else "found conda usage"
             }
         }
         
         if output_format == FORMAT_CHECKLIST:
             return self.format_checklist(standards)
         return standards
+
+    def _check_makefile(self, project_id: str) -> bool:
+        """Check if project has a Makefile at root level."""
+        files = self.get_repository_files(project_id)
+        return "Makefile" in files
+
+    def _check_conda_usage(self, project_id: str) -> bool:
+        """Check for conda usage in various files."""
+        files = self.get_repository_files(project_id)
+        
+        # Check for conda-related files
+        conda_files = [
+            "environment.yml",
+            ".condarc",
+            "*.conda",
+            "*.yml",
+            "*.yaml"
+        ]
+        
+        # Check for conda in filenames
+        for file in files:
+            if any(file.endswith(ext) for ext in conda_files) or "conda" in file.lower():
+                return True
+        
+        # Check for conda in .gitlab-ci.yml
+        ci_files = [".gitlab-ci.yml", ".gitlab-ci.yaml"]
+        for ci_file in ci_files:
+            if ci_file in files:
+                content = self.gl.projects.get(project_id).files.get(
+                    file_path=ci_file, ref="main"
+                ).decode()
+                if "conda" in content.lower():
+                    return True
+        
+        # Check shell scripts for conda commands
+        for file in files:
+            if file.endswith(".sh"):
+                try:
+                    content = self.gl.projects.get(project_id).files.get(
+                        file_path=file, ref="main"
+                    ).decode()
+                    if "conda" in content.lower():
+                        return True
+                except Exception:
+                    continue
+        
+        return False
 
     def _check_pyproject_toml(self, project_id: str) -> bool:
         """Check if project has a valid pyproject.toml file."""
