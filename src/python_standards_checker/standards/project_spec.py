@@ -8,8 +8,8 @@ class ProjectSpecStandard(BaseStandard):
     code = "PY002"
     category = "Project Structure"
     standard = True
-    severity = "RECOMMENDATION"
-    description = "Project SHOULD have a project specification"
+    severity = "CRITICAL"
+    description = "Project MUST have a project specification"
     recommendation = "Create a project specification file to specify project metadata and dependencies"
     standard_type = "file"
 
