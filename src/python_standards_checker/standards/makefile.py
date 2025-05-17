@@ -1,4 +1,5 @@
-import gitlab
+from python_standards_checker.repositories import BaseRepository
+
 from .base import BaseStandard
 
 
@@ -14,16 +15,16 @@ class MakefileStandard(BaseStandard):
     standard_type = "file"
 
     @classmethod
-    def check(cls, gl: "gitlab.Gitlab", project_id: str) -> dict:
-        """Check for Makefile."""
-        has_makefile = cls._check_makefile(gl, project_id)
+    def check(cls, repository: BaseRepository) -> dict:
+        """Check if project has a Makefile."""
+        files = repository.get_files()
         return {
-            "meets_standard": has_makefile,
-            "value": "present" if has_makefile else "not found",
+            "meets_standard": "Makefile" in files,
+            "value": "Makefile" if "Makefile" in files else "not found",
         }
 
     @classmethod
-    def _check_makefile(cls, gl: "gitlab.Gitlab", project_id: str) -> bool:
+    def _check_makefile(cls, repository: BaseRepository) -> bool:
         """Check if project has a Makefile at root level."""
-        files = cls.get_repository_files(gl, project_id)
+        files = repository.get_files()
         return "Makefile" in files

@@ -41,5 +41,5 @@ zip-safe = false
 ignore_missing_imports = true
 
 [tool.pylint]
-disable = "missing-module-docstring,redefined-outer-name,broad-exception-caught"
+disable = "missing-module-docstring,redefined-outer-name,broad-exception-caught,too-many-statements,too-many-branches"
 max-line-length = 120

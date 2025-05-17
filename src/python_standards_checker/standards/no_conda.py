@@ -1,5 +1,6 @@
-import gitlab
 from python_standards_checker.constants import CONDA_FILES
+from python_standards_checker.repositories import BaseRepository
+
 from .base import BaseStandard
 
 
@@ -15,18 +16,23 @@ class NoCondaStandard(BaseStandard):
     standard_type = "dependency"
 
     @classmethod
-    def check(cls, gl: "gitlab.Gitlab", project_id: str) -> dict:
-        """Check for conda usage."""
-        uses_conda = cls._check_conda_usage(gl, project_id)
+    def check(cls, repository: BaseRepository) -> dict:
+        """Check if project uses conda."""
+        files = repository.get_files()
+        has_conda_file = any(
+            file.endswith(".yml") or file.endswith(".yaml") for file in files
+        )
         return {
-            "meets_standard": not uses_conda,
-            "value": "not found" if not uses_conda else "found conda usage",
+            "meets_standard": not has_conda_file,
+            "value": (
+                "no conda file found" if not has_conda_file else "conda file found"
+            ),
         }
 
     @classmethod
-    def _check_conda_usage(cls, gl: "gitlab.Gitlab", project_id: str) -> bool:
+    def _check_conda_usage(cls, repository: BaseRepository) -> bool:
         """Check for conda usage in various files."""
-        files = cls.get_repository_files(gl, project_id)
+        files = repository.get_files()
 
         # Check for conda-related files
         for file in files:
@@ -40,24 +46,16 @@ class NoCondaStandard(BaseStandard):
         ci_files = [".gitlab-ci.yml", ".gitlab-ci.yaml"]
         for ci_file in ci_files:
             if ci_file in files:
-                content = (
-                    gl.projects.get(project_id)
-                    .files.get(file_path=ci_file, ref="main")
-                    .decode()
-                )
-                if content and b"conda" in content.lower():
+                content = repository.read_file_content(ci_file).decode()
+                if content and "conda" in content.lower():
                     return True
 
         # Check shell scripts for conda commands
         for file in files:
             if file.endswith(".sh"):
                 try:
-                    content = (
-                        gl.projects.get(project_id)
-                        .files.get(file_path=file, ref="main")
-                        .decode()
-                    )
-                    if content and b"conda" in content.lower():
+                    content = repository.read_file_content(file).decode()
+                    if content and "conda" in content.lower():
                         return True
                 except Exception as e:
                     print(f"Error checking file {file}: {str(e)}")

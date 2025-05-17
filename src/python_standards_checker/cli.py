@@ -2,8 +2,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Dict, Optional, Union
-import gitlab
+from typing import Dict, Union
 
 from .constants import (
     CHECKMARK,
@@ -18,6 +17,7 @@ from .constants import (
     SEVERITY_CRITICAL,
     STANDARD_CODES,
 )
+from .repositories import BaseRepository, GitLabRepository, LocalRepository
 from .standards import (
     PythonVersionStandard,
     ProjectSpecStandard,
@@ -36,78 +36,44 @@ STANDARDS = [
 ]
 
 
-class GitLabChecker:
-    """A class to check Python standards in GitLab projects.
+class PythonStandardsChecker:
+    """A class to check Python standards in repositories.
 
-    This class provides methods to authenticate with a GitLab instance and
-    check various Python coding standards in a specified GitLab project.
+    This class provides methods to check various Python coding standards in a specified repository.
+    It supports both GitLab repositories and local directories.
     It supports formatting the results as a checklist or JSON.
 
     Attributes:
-        gitlab_url: The URL of the GitLab instance.
-        gl: The GitLab API client instance.
+        repository: The repository instance (GitLab or Local)
     """
 
-    def __init__(
-        self, gitlab_url: Optional[str] = None, private_token: Optional[str] = None
-    ):
-        """Initialize GitLab API client.
+    def __init__(self, repository: BaseRepository):
+        """Initialize the PythonStandardsChecker with a repository instance.
 
         Args:
-            gitlab_url: URL of the GitLab instance
-            private_token: GitLab private token for authentication
-
-        Raises:
-            ValueError: If token is not provided and not found in environment
-            ValueError: If GitLab URL is invalid
+            repository: Repository instance to check standards against
         """
-        if not private_token:
-            private_token = os.getenv("GITLAB_TOKEN")
-            if not private_token:
-                raise ValueError(
-                    "GitLab token is required. Please provide it via --private-token \n"
-                    "or GITLAB_TOKEN environment variable."
-                )
-
-        self.gitlab_url = gitlab_url or os.getenv("GITLAB_URL", "https://gitlab.com")
-        if not self.gitlab_url or not self.gitlab_url.startswith("https://"):
-            raise ValueError(
-                f"Invalid GitLab URL: {self.gitlab_url}. Must be a full URL starting with https://"
-            )
-
-        self.gl = gitlab.Gitlab(self.gitlab_url, private_token=private_token)
-
-        # Test connection
-        try:
-            self.gl.auth()
-        except gitlab.exceptions.GitlabAuthenticationError as e:
-            raise ValueError("Invalid GitLab token. Authentication failed.") from e
-        except Exception as e:
-            raise ValueError(f"Failed to connect to GitLab: {str(e)}") from e
+        self.repository = repository
 
     def format_checklist(self, standards_results: Dict[str, Dict]) -> str:
         """Format standards as a checklist with colored checkmarks/crosses."""
-        output = []
-
-        for _, std in standards_results.items():
-            # Format the check mark with appropriate color and symbol
-            if std["meets_standard"]:
-                check = f"{GREEN}{CHECKMARK}{RESET}"
+        output = ""
+        for code, result in standards_results.items():
+            if result["meets_standard"]:
+                emoji = CHECKMARK
+                color = GREEN
             else:
-                if std["severity"] == SEVERITY_CRITICAL:
-                    check = f"{RED}{CROSS}{RESET}"
-                else:  # RECOMMENDATION
-                    check = f"{ORANGE}{WARNING}{RESET}"
+                emoji = CROSS
+                color = RED
+                if result["severity"] == SEVERITY_CRITICAL:
+                    emoji = WARNING
+                    color = ORANGE
 
-            # Format the standard line
-            output.append(f"[{check}] [{std['code']}] {std['description']}")
-
-            # Add recommendation if standard is not met
-            if not std["meets_standard"]:
-                output.append(f"    - Got: {std['value']}")
-                output.append(f"    - Suggestion: {std['recommendation']}")
-
-        return "\n".join(output)
+            output += f"[{color}{emoji}{RESET}] [{code}] {result['description']}\n"
+            if not result["meets_standard"]:
+                output += f"    - Got: {result.get('value', 'not found')}\n"
+                output += f"    - Suggestion: {result['recommendation']}\n"
+        return output
 
     def format_json(self, standards_results: Dict[str, Dict]) -> str:
         """Format standards as JSON."""
@@ -115,18 +81,17 @@ class GitLabChecker:
 
     def check_standards(
         self,
-        project_id: str,
         output_format: str = FORMAT_CHECKLIST,
         standards: list | None = None,
     ) -> Union[Dict, str]:
-        """Check Python standards in a GitLab project and return results in specified format."""
+        """Check Python standards in a repository and return results in specified format."""
         if not standards:
             standards = STANDARDS
 
         results = {}
         for std in standards:
-            result = std.check(self.gl, project_id)
-            result = {**result, **std.get_info()}
+            result = {**std.get_info()}
+            result.update(std.check(self.repository))
             results[std.code] = result
 
         if output_format == FORMAT_JSON:
@@ -135,39 +100,65 @@ class GitLabChecker:
 
 
 def main():
-    """Main function to handle command-line arguments and run checks."""
+    """Main function to parse arguments and run checks."""
     parser = argparse.ArgumentParser(
-        description="Check Python standards in GitLab projects"
+        description="Check Python standards in repositories"
     )
-    parser.add_argument("project_id", help="GitLab project ID")
-    parser.add_argument("--gitlab-url", help="GitLab URL (default: https://gitlab.com)")
-    parser.add_argument("--private-token", help="GitLab private token")
+    parser.add_argument(
+        "--source",
+        choices=["gitlab", "local"],
+        required=True,
+        help="Source type (gitlab or local)",
+    )
+
+    # Project ID is only required for GitLab
+    gitlab_group = parser.add_argument_group("GitLab options")
+    gitlab_group.add_argument(
+        "--project-id",
+        dest="project_id",
+        help="GitLab project ID or URL (required if source=gitlab)",
+    )
+    gitlab_group.add_argument(
+        "--token",
+        dest="private_token",
+        help="GitLab private token (can also use GITLAB_TOKEN env var)",
+    )
+    gitlab_group.add_argument(
+        "--url",
+        dest="gitlab_url",
+        help="GitLab instance URL (defaults to https://gitlab.com)",
+    )
+
+    # Local specific argument
+    local_group = parser.add_argument_group("Local options")
+    local_group.add_argument(
+        "--directory",
+        dest="directory_path",
+        help="Path to local directory to check (required if source=local)",
+    )
+
+    parser.add_argument(
+        "--include",
+        dest="include",
+        nargs="+",
+        choices=STANDARD_CODES,
+        help="Include specific standards to check (comma-separated list)",
+    )
+    parser.add_argument(
+        "--exclude",
+        dest="exclude",
+        nargs="+",
+        choices=STANDARD_CODES,
+        help="Exclude specific standards from check (comma-separated list)",
+    )
     parser.add_argument(
         "--format",
+        dest="output_format",
         choices=[FORMAT_JSON, FORMAT_CHECKLIST],
         default=FORMAT_CHECKLIST,
-        help="Output format (default: checklist)",
+        help="Output format (json or checklist)",
     )
-    parser.add_argument(
-        "--include", nargs="*", help="Include specific standards by code (e.g., PY001)"
-    )
-    parser.add_argument(
-        "--exclude", nargs="*", help="Exclude specific standards by code (e.g., PY001)"
-    )
-
     args = parser.parse_args()
-
-    # Validate project ID
-    try:
-        project_id = int(args.project_id)
-    except ValueError:
-        print(f"Error: Project ID must be a number, got '{args.project_id}'")
-        sys.exit(1)
-
-    # Validate included/excluded standards
-    if args.include and args.exclude:
-        print("Error: Cannot use --include and --exclude together")
-        sys.exit(1)
 
     if args.include:
         invalid_codes = [code for code in args.include if code not in STANDARD_CODES]
@@ -188,21 +179,36 @@ def main():
     elif args.exclude:
         filtered_standards = [std for std in STANDARDS if std.code not in args.exclude]
 
-    # Create checker and run checks
+    # Create repository based on source type
     try:
-        checker = GitLabChecker(
-            gitlab_url=args.gitlab_url, private_token=args.private_token
+        repository = None
+        if args.source == "gitlab":
+            if not args.project_id:
+                raise ValueError("Project ID is required for GitLab source")
+
+            if not args.private_token:
+                args.private_token = os.getenv("GITLAB_TOKEN")
+                if not args.private_token:
+                    raise ValueError("GitLab token is required")
+
+            gitlab_url = args.gitlab_url or os.getenv(
+                "GITLAB_URL", "https://gitlab.com"
+            )
+            repository = GitLabRepository(
+                gitlab_url, args.private_token, args.project_id
+            )
+
+        elif args.source == "local":
+            if not args.directory_path:
+                raise ValueError("Directory path is required for local source")
+            repository = LocalRepository(args.directory_path)
+
+        # Create checker with repository
+        checker = PythonStandardsChecker(repository)
+
+        results = checker.check_standards(
+            standards=filtered_standards, output_format=args.output_format
         )
-
-        # Test project access before running checks
-        try:
-            project = checker.gl.projects.get(project_id)
-            print(f"Successfully connected to project: {project.name}")
-        except gitlab.exceptions.GitlabGetError as e:
-            print(f"Error: Failed to access project ID {project_id}: {str(e)}")
-            sys.exit(1)
-
-        results = checker.check_standards(project_id, args.format, filtered_standards)
         print(results)
     except ValueError as e:
         print(f"Error: {str(e)}")

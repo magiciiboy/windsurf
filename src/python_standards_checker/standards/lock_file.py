@@ -1,4 +1,5 @@
-import gitlab
+from python_standards_checker.repositories import BaseRepository
+
 from .base import BaseStandard
 
 
@@ -14,20 +15,19 @@ class LockFileStandard(BaseStandard):
     standard_type = "file"
 
     @classmethod
-    def check(cls, gl: "gitlab.Gitlab", project_id: str) -> dict:
-        """Check for lock file."""
-        has_lock_file = cls._check_lock_file(gl, project_id)
+    def check(cls, repository: BaseRepository) -> dict:
+        """Check if project has a lock file."""
+        files = repository.get_files()
         return {
-            "meets_standard": has_lock_file,
-            "value": "present" if has_lock_file else "not found",
+            "meets_standard": any(
+                file.endswith(".lock") or file == "requirements.txt" for file in files
+            ),
+            "value": (
+                "lock file found"
+                if any(
+                    file.endswith(".lock") or file == "requirements.txt"
+                    for file in files
+                )
+                else "no lock file found"
+            ),
         }
-
-    @classmethod
-    def _check_lock_file(cls, gl: "gitlab.Gitlab", project_id: str) -> bool:
-        """Check if project has a lock file (requirements.txt, poetry.lock, or pip-tools requirements.in)."""
-        files = cls.get_repository_files(gl, project_id)
-
-        # Check for common lock files
-        lock_files = ["requirements.txt", "poetry.lock", "requirements.in"]  # pip-tools
-
-        return any(file in files for file in lock_files)

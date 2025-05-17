@@ -1,4 +1,5 @@
-import gitlab
+from python_standards_checker.repositories import BaseRepository
+
 from .base import BaseStandard
 
 
@@ -14,16 +15,16 @@ class ProjectSpecStandard(BaseStandard):
     standard_type = "file"
 
     @classmethod
-    def check(cls, gl: "gitlab.Gitlab", project_id: str) -> dict:
-        """Check for project specification file."""
-        has_project_spec = cls._check_project_spec(gl, project_id)
+    def check(cls, repository: BaseRepository) -> dict:
+        """Check if project has a project specification."""
+        files = repository.get_files()
         return {
-            "meets_standard": has_project_spec,
-            "value": "present" if has_project_spec else "not found",
+            "meets_standard": "pyproject.toml" in files,
+            "value": "pyproject.toml" if "pyproject.toml" in files else "not found",
         }
 
     @classmethod
-    def _check_project_spec(cls, gl: "gitlab.Gitlab", project_id: str) -> bool:
+    def _check_project_spec(cls, repository: BaseRepository) -> bool:
         """Check if project has a valid pyproject.toml file."""
-        files = cls.get_repository_files(gl, project_id)
+        files = repository.get_files()
         return "pyproject.toml" in files

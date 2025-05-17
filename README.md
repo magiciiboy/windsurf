@@ -46,13 +46,17 @@ pip install .
 ## Usage
 
 ```bash
+# Check GitLab repository
 python-standards-checker <project_id> [--token <gitlab_token>] [--url <gitlab_url>]
+
+# Check local directory
+python-standards-checker <directory_path> --directory
 ```
 
 ### Environment Variables
 
-- `GITLAB_TOKEN`: GitLab private token
-- `GITLAB_URL`: GitLab instance URL (defaults to https://gitlab.com)
+- `GITLAB_TOKEN`: GitLab private token (for GitLab mode)
+- `GITLAB_URL`: GitLab instance URL (defaults to https://gitlab.com) (for GitLab mode)
 
 ```bash
 export GITLAB_TOKEN=your_token_here
