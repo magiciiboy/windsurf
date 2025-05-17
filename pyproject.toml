@@ -5,7 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "python-standards-checker"
 version = "0.1.0"
-description = "CLI tool to check Python standards in GitLab repositories"
+description = "Check Python standards in GitLab projects"
+authors = [
+    { name="Tung Huynh", email="" }
+]
 requires-python = ">=3.9"
 dependencies = [
     "python-gitlab>=3.0.0",
@@ -16,10 +19,27 @@ dependencies = [
     "packaging>=23.0"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.0.0",
+    "pylint>=2.17.0",
+    "black>=23.0.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
 [project.scripts]
 python-standards-checker = "python_standards_checker:main"
 
 [tool.setuptools]
 packages = ["python_standards_checker"]
+package-dir = {"" = "src"}
 include-package-data = true
 zip-safe = false
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.pylint]
+disable = "missing-module-docstring,redefined-outer-name,broad-exception-caught"
+max-line-length = 120

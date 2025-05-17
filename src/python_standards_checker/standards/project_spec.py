@@ -1,9 +1,10 @@
+import gitlab
 from .base import BaseStandard
-from typing import Optional
 
 
 class ProjectSpec(BaseStandard):
     """Project specification standard."""
+
     code = "PY002"
     category = "Project Structure"
     standard = True
@@ -13,16 +14,16 @@ class ProjectSpec(BaseStandard):
     standard_type = "file"
 
     @classmethod
-    def check(cls, gl: 'gitlab.Gitlab', project_id: str) -> dict:
+    def check(cls, gl: "gitlab.Gitlab", project_id: str) -> dict:
         """Check for project specification file."""
         has_project_spec = cls._check_project_spec(gl, project_id)
         return {
             "meets_standard": has_project_spec,
-            "value": "present" if has_project_spec else "not found"
+            "value": "present" if has_project_spec else "not found",
         }
 
     @classmethod
-    def _check_project_spec(cls, gl: 'gitlab.Gitlab', project_id: str) -> bool:
+    def _check_project_spec(cls, gl: "gitlab.Gitlab", project_id: str) -> bool:
         """Check if project has a valid pyproject.toml file."""
         files = cls.get_repository_files(gl, project_id)
         return "pyproject.toml" in files
