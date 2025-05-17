@@ -25,9 +25,11 @@ FORMAT_CHECKLIST = "checklist"
 SEVERITY_CRITICAL = "CRITICAL"
 SEVERITY_RECOMMENDATION = "RECOMMENDATION"
 
-# Standards with severity and descriptions
+# Standards with severity, categories, codes, and descriptions
 STANDARDS = {
     "python_version": {
+        "code": "PY001",
+        "category": "Version",
         "standard": ">=3.9",
         "severity": SEVERITY_CRITICAL,
         "description": "Python version MUST be at least 3.9",
@@ -35,6 +37,8 @@ STANDARDS = {
         "standard_type": "version"
     },
     "pyproject_toml": {
+        "code": "PY002",
+        "category": "Project Structure",
         "standard": True,
         "severity": SEVERITY_RECOMMENDATION,
         "description": "Project SHOULD have a pyproject.toml specification",
@@ -42,6 +46,8 @@ STANDARDS = {
         "standard_type": "file"
     },
     "makefile": {
+        "code": "PY003",
+        "category": "Project Structure",
         "standard": True,
         "severity": SEVERITY_RECOMMENDATION,
         "description": "Project SHOULD have Makefile at root level",
@@ -49,6 +55,8 @@ STANDARDS = {
         "standard_type": "file"
     },
     "no_conda": {
+        "code": "PY004",
+        "category": "Dependency Management",
         "standard": False,
         "severity": SEVERITY_CRITICAL,
         "description": "Project MUST NOT use conda",
@@ -56,6 +64,8 @@ STANDARDS = {
         "standard_type": "dependency"
     },
     "lock_file": {
+        "code": "PY005",
+        "category": "Dependency Management",
         "standard": True,
         "severity": SEVERITY_RECOMMENDATION,
         "description": "Project SHOULD have a lock file (poetry.lock, pip-tools requirements.in, requirements.txt)",
@@ -63,6 +73,16 @@ STANDARDS = {
         "standard_type": "file"
     }
 }
+
+# Standard categories
+STANDARD_CATEGORIES = {
+    "Version": "Version-related standards",
+    "Project Structure": "Project structure and organization standards",
+    "Dependency Management": "Dependency management standards"
+}
+
+# Standard codes
+STANDARD_CODES = {std["code"]: std_name for std_name, std in STANDARDS.items()}
 
 class GitLabChecker:
     def __init__(self, gitlab_url: Optional[str] = None, private_token: Optional[str] = None):
@@ -103,60 +123,78 @@ class GitLabChecker:
             return f"{RED}{CROSS}{RESET}"
         return f"{ORANGE}{WARNING}{RESET}"
 
-    def check_standards(self, project_id: str, output_format: str = FORMAT_JSON) -> Union[Dict, str]:
+    def check_standards(self, project_id: str, output_format: str = FORMAT_JSON, standards: Dict[str, Dict] = None) -> Union[Dict, str]:
         """Check Python standards in a GitLab project and return results in specified format."""
+        if standards is None:
+            standards = STANDARDS
+
         python_version = self.get_python_version(project_id)
         pyproject_toml = self._check_pyproject_toml(project_id)
         has_makefile = self._check_makefile(project_id)
         uses_conda = self._check_conda_usage(project_id)
         has_lock_file = self._check_lock_file(project_id)
         
-        standards = {
-            "python_version": {
-                "standard": STANDARDS["python_version"]["standard"],
-                "severity": STANDARDS["python_version"]["severity"],
-                "description": STANDARDS["python_version"]["description"],
-                "recommendation": STANDARDS["python_version"]["recommendation"],
-                "meets_standard": python_version and self.is_version_supported(python_version),
-                "detected_version": python_version
-            },
-            "pyproject_toml": {
-                "standard": STANDARDS["pyproject_toml"]["standard"],
-                "severity": STANDARDS["pyproject_toml"]["severity"],
-                "description": STANDARDS["pyproject_toml"]["description"],
-                "recommendation": STANDARDS["pyproject_toml"]["recommendation"],
-                "meets_standard": pyproject_toml,
-                "detected_version": "present" if pyproject_toml else "not found"
-            },
-            "makefile": {
-                "standard": STANDARDS["makefile"]["standard"],
-                "severity": STANDARDS["makefile"]["severity"],
-                "description": STANDARDS["makefile"]["description"],
-                "recommendation": STANDARDS["makefile"]["recommendation"],
-                "meets_standard": has_makefile,
-                "detected_version": "present" if has_makefile else "not found"
-            },
-            "no_conda": {
-                "standard": STANDARDS["no_conda"]["standard"],
-                "severity": STANDARDS["no_conda"]["severity"],
-                "description": STANDARDS["no_conda"]["description"],
-                "recommendation": STANDARDS["no_conda"]["recommendation"],
-                "meets_standard": not uses_conda,
-                "detected_version": "not found" if not uses_conda else "found conda usage"
-            },
-            "lock_file": {
-                "standard": STANDARDS["lock_file"]["standard"],
-                "severity": STANDARDS["lock_file"]["severity"],
-                "description": STANDARDS["lock_file"]["description"],
-                "recommendation": STANDARDS["lock_file"]["recommendation"],
-                "meets_standard": has_lock_file,
-                "detected_version": "present" if has_lock_file else "not found"
-            }
-        }
+        results = {}
+        for std_name, std in standards.items():
+            if std_name == "python_version":
+                results[std_name] = {
+                    "code": std["code"],
+                    "category": std["category"],
+                    "standard": std["standard"],
+                    "severity": std["severity"],
+                    "description": std["description"],
+                    "recommendation": std["recommendation"],
+                    "meets_standard": python_version and self.is_version_supported(python_version),
+                    "detected_version": python_version
+                }
+            elif std_name == "pyproject_toml":
+                results[std_name] = {
+                    "code": std["code"],
+                    "category": std["category"],
+                    "standard": std["standard"],
+                    "severity": std["severity"],
+                    "description": std["description"],
+                    "recommendation": std["recommendation"],
+                    "meets_standard": pyproject_toml,
+                    "detected_version": "present" if pyproject_toml else "not found"
+                }
+            elif std_name == "makefile":
+                results[std_name] = {
+                    "code": std["code"],
+                    "category": std["category"],
+                    "standard": std["standard"],
+                    "severity": std["severity"],
+                    "description": std["description"],
+                    "recommendation": std["recommendation"],
+                    "meets_standard": has_makefile,
+                    "detected_version": "present" if has_makefile else "not found"
+                }
+            elif std_name == "no_conda":
+                results[std_name] = {
+                    "code": std["code"],
+                    "category": std["category"],
+                    "standard": std["standard"],
+                    "severity": std["severity"],
+                    "description": std["description"],
+                    "recommendation": std["recommendation"],
+                    "meets_standard": not uses_conda,
+                    "detected_version": "not found" if not uses_conda else "found conda usage"
+                }
+            elif std_name == "lock_file":
+                results[std_name] = {
+                    "code": std["code"],
+                    "category": std["category"],
+                    "standard": std["standard"],
+                    "severity": std["severity"],
+                    "description": std["description"],
+                    "recommendation": std["recommendation"],
+                    "meets_standard": has_lock_file,
+                    "detected_version": "present" if has_lock_file else "not found"
+                }
         
         if output_format == FORMAT_CHECKLIST:
-            return self.format_checklist(standards)
-        return standards
+            return self.format_checklist(results)
+        return results
 
     def _check_lock_file(self, project_id: str) -> bool:
         """Check if project has a lock file (requirements.txt, poetry.lock, or pip-tools requirements.in)."""
@@ -289,6 +327,9 @@ def main():
     parser.add_argument('--url', help='GitLab instance URL')
     parser.add_argument('--format', choices=[FORMAT_JSON, FORMAT_CHECKLIST], default=FORMAT_CHECKLIST,
                        help='Output format (json or checklist)')
+    parser.add_argument('--include', nargs='*', help='List of standard codes to include (e.g., PY001 PY002)')
+    parser.add_argument('--exclude', nargs='*', help='List of standard codes to exclude (e.g., PY003 PY004)')
+    parser.add_argument('--list-standards', action='store_true', help='List all available standards and their codes')
     args = parser.parse_args()
 
     # Get token from environment variable if not provided as argument
@@ -299,13 +340,34 @@ def main():
         print("Error: GitLab token is required. Please provide it via --token or GITLAB_TOKEN environment variable.")
         return
 
+    # Handle list-standards option
+    if args.list_standards:
+        print("Available Standards:")
+        for code, std_name in STANDARD_CODES.items():
+            std = STANDARDS[std_name]
+            print(f"\nCode: {code}")
+            print(f"Category: {std['category']}")
+            print(f"Severity: {std['severity']}")
+            print(f"Description: {std['description']}")
+        return
+
+    # Filter standards based on include/exclude options
+    filtered_standards = STANDARDS.copy()
+    if args.include:
+        filtered_standards = {std_name: std for std_name, std in STANDARDS.items() 
+                            if std['code'] in args.include}
+    elif args.exclude:
+        filtered_standards = {std_name: std for std_name, std in STANDARDS.items() 
+                            if std['code'] not in args.exclude}
+
+    # Create checker and run checks
     checker = GitLabChecker(gitlab_url=url, private_token=token)
-    result = checker.check_standards(args.project_id, args.format)
+    results = checker.check_standards(args.project_id, output_format=args.format, standards=filtered_standards)
     
     if args.format == FORMAT_JSON:
-        print(json.dumps(result, indent=2))
+        print(json.dumps(results, indent=2))
     else:
-        print(result)
+        print(results)
 
 if __name__ == "__main__":
     main()
