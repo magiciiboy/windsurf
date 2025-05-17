@@ -72,7 +72,39 @@ STANDARD_CATEGORIES = {
 }
 
 # Standard codes
-STANDARD_CODES = {std["code"]: std_name for std_name, std in STANDARDS.items()}
+STANDARD_CODES = {
+    "PY001": "python_version",
+    "PY002": "pyproject_toml",
+    "PY003": "makefile",
+    "PY004": "no_conda",
+    "PY005": "lock_file"
+}
+
+# Standard categories
+STANDARD_CATEGORIES = {
+    "Version": "Version-related standards",
+    "Project Structure": "Project structure and organization standards",
+    "Dependency Management": "Dependency management standards"
+}
+
+# Lock files to check
+LOCK_FILES = [
+    "requirements.txt",
+    "poetry.lock",
+    "requirements.in"  # pip-tools
+]
+
+# Conda-related files
+CONDA_FILES = [
+    "environment.yml",
+    ".condarc",
+    "*.conda",
+    "*.yml",
+    "*.yaml"
+]
+
+# GitLab CI files
+CI_FILES = [".gitlab-ci.yml", ".gitlab-ci.yaml"]
 
 # Lock files to check
 LOCK_FILES = [

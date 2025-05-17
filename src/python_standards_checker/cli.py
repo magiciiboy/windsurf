@@ -11,116 +11,56 @@ from .constants import (
     CHECKMARK, CROSS, WARNING, GREEN, RED, ORANGE, RESET,
     FORMAT_JSON, FORMAT_CHECKLIST,
     SEVERITY_CRITICAL,
-    STANDARDS, STANDARD_CODES
+    STANDARD_CODES
 )
+from .standards import STANDARDS
 
 class GitLabChecker:
     def __init__(self, gitlab_url: Optional[str] = None, private_token: Optional[str] = None):
         self.gitlab_url = gitlab_url or os.getenv("GITLAB_URL", "https://gitlab.com")
         self.gl = gitlab.Gitlab(self.gitlab_url, private_token=private_token)
 
-    def format_checklist(self, standards: Dict[str, Dict]) -> str:
+    def format_checklist(self, standards_results: Dict[str, Dict]) -> str:
         """Format standards as a checklist with colored checkmarks/crosses."""
         output = []
         
-        for std_name, std_data in standards.items():
-            # Get standard info from STANDARDS dictionary
-            std_info = STANDARDS[std_name]
-            
+        for std in standards_results:
             # Format the check mark with appropriate color and symbol
-            if std_data["meets_standard"]:
+            if std["meets_standard"]:
                 check = f"{GREEN}{CHECKMARK}{RESET}"
             else:
-                if std_info["severity"] == SEVERITY_CRITICAL:
+                if std["severity"] == SEVERITY_CRITICAL:
                     check = f"{RED}{CROSS}{RESET}"
                 else:  # RECOMMENDATION
                     check = f"{ORANGE}{WARNING}{RESET}"
             
             # Format the standard line
-            output.append(f"[{check}] {std_info['description']}")
+            output.append(f"[{check}] {std['description']}")
             
             # Add recommendation if standard is not met
-            if not std_data["meets_standard"]:
-                output.append(f"    - Suggestion: {std_info['recommendation']}")
+            if not std["meets_standard"]:
+                output.append(f"    - Suggestion: {std['recommendation']}")
         
         return "\n".join(output)
 
-    def _format_check(self, meets_standard: bool, severity: str) -> str:
-        """Format a single check with colored checkmark/cross."""
-        if meets_standard:
-            return f"{GREEN}{CHECKMARK}{RESET}"
-        if severity == SEVERITY_CRITICAL:
-            return f"{RED}{CROSS}{RESET}"
-        return f"{ORANGE}{WARNING}{RESET}"
-
-    def check_standards(self, project_id: str, output_format: str = FORMAT_JSON, standards: Dict[str, Dict] = None) -> Union[Dict, str]:
+    def check_standards(self, project_id: str, output_format: str = FORMAT_JSON, standards: list = None) -> Union[Dict, str]:
         """Check Python standards in a GitLab project and return results in specified format."""
         if standards is None:
             standards = STANDARDS
 
-        python_version = self.get_python_version(project_id)
-        pyproject_toml = self._check_pyproject_toml(project_id)
-        has_makefile = self._check_makefile(project_id)
-        uses_conda = self._check_conda_usage(project_id)
-        has_lock_file = self._check_lock_file(project_id)
-        
-        results = {}
-        for std_name, std in standards.items():
-            if std_name == "python_version":
-                results[std_name] = {
-                    "code": std["code"],
-                    "category": std["category"],
-                    "standard": std["standard"],
-                    "severity": std["severity"],
-                    "description": std["description"],
-                    "recommendation": std["recommendation"],
-                    "meets_standard": python_version and self.is_version_supported(python_version),
-                    "detected_version": python_version
-                }
-            elif std_name == "pyproject_toml":
-                results[std_name] = {
-                    "code": std["code"],
-                    "category": std["category"],
-                    "standard": std["standard"],
-                    "severity": std["severity"],
-                    "description": std["description"],
-                    "recommendation": std["recommendation"],
-                    "meets_standard": pyproject_toml,
-                    "detected_version": "present" if pyproject_toml else "not found"
-                }
-            elif std_name == "makefile":
-                results[std_name] = {
-                    "code": std["code"],
-                    "category": std["category"],
-                    "standard": std["standard"],
-                    "severity": std["severity"],
-                    "description": std["description"],
-                    "recommendation": std["recommendation"],
-                    "meets_standard": has_makefile,
-                    "detected_version": "present" if has_makefile else "not found"
-                }
-            elif std_name == "no_conda":
-                results[std_name] = {
-                    "code": std["code"],
-                    "category": std["category"],
-                    "standard": std["standard"],
-                    "severity": std["severity"],
-                    "description": std["description"],
-                    "recommendation": std["recommendation"],
-                    "meets_standard": not uses_conda,
-                    "detected_version": "not found" if not uses_conda else "found conda usage"
-                }
-            elif std_name == "lock_file":
-                results[std_name] = {
-                    "code": std["code"],
-                    "category": std["category"],
-                    "standard": std["standard"],
-                    "severity": std["severity"],
-                    "description": std["description"],
-                    "recommendation": std["recommendation"],
-                    "meets_standard": has_lock_file,
-                    "detected_version": "present" if has_lock_file else "not found"
-                }
+        results = []
+        for std_class in standards:
+            result = std_class.check(project_id, self)
+            result.update({
+                "code": std_class.code,
+                "category": std_class.category,
+                "standard": std_class.standard,
+                "severity": std_class.severity,
+                "description": std_class.description,
+                "recommendation": std_class.recommendation,
+                "standard_type": std_class.standard_type
+            })
+            results.append(result)
         
         if output_format == FORMAT_CHECKLIST:
             return self.format_checklist(results)
@@ -284,11 +224,9 @@ def main():
     # Filter standards based on include/exclude options
     filtered_standards = STANDARDS.copy()
     if args.include:
-        filtered_standards = {std_name: std for std_name, std in STANDARDS.items() 
-                            if std['code'] in args.include}
+        filtered_standards = [std for std in STANDARDS if std.code in args.include]
     elif args.exclude:
-        filtered_standards = {std_name: std for std_name, std in STANDARDS.items() 
-                            if std['code'] not in args.exclude}
+        filtered_standards = [std for std in STANDARDS if std.code not in args.exclude]
 
     # Create checker and run checks
     checker = GitLabChecker(gitlab_url=url, private_token=token)
