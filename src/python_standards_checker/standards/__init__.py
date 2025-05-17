@@ -1,19 +1,16 @@
 from .base import BaseStandard
-from .python_version import PythonVersion
-from .project_spec import ProjectSpec
-from .makefile import Makefile
-from .no_conda import NoConda
-from .lock_file import LockFile
+from .python_version import PythonVersionStandard
+from .project_spec import ProjectSpecStandard
+from .makefile import MakefileStandard
+from .no_conda import NoCondaStandard
+from .lock_file import LockFileStandard
 
-# List of all standards
-STANDARDS = [PythonVersion, ProjectSpec, Makefile, NoConda, LockFile]
 
 __all__ = [
     "BaseStandard",
-    "PythonVersion",
-    "ProjectSpec",
-    "Makefile",
-    "NoConda",
-    "LockFile",
-    "STANDARDS",
+    "PythonVersionStandard",
+    "ProjectSpecStandard",
+    "MakefileStandard",
+    "NoCondaStandard",
+    "LockFileStandard",
 ]

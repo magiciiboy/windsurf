@@ -2,7 +2,7 @@ import gitlab
 from .base import BaseStandard
 
 
-class LockFile(BaseStandard):
+class LockFileStandard(BaseStandard):
     """Lock file standard."""
 
     code = "PY005"

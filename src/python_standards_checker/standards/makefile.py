@@ -2,7 +2,7 @@ import gitlab
 from .base import BaseStandard
 
 
-class Makefile(BaseStandard):
+class MakefileStandard(BaseStandard):
     """Makefile standard."""
 
     code = "PY003"

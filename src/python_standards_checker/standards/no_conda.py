@@ -3,7 +3,7 @@ from python_standards_checker.constants import CONDA_FILES
 from .base import BaseStandard
 
 
-class NoConda(BaseStandard):
+class NoCondaStandard(BaseStandard):
     """No Conda standard."""
 
     code = "PY004"

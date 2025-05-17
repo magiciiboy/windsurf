@@ -5,7 +5,7 @@ from python_standards_checker.utils import is_version_supported
 from .base import BaseStandard
 
 
-class PythonVersion(BaseStandard):
+class PythonVersionStandard(BaseStandard):
     """Python version standard."""
 
     code = "PY001"

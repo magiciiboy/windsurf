@@ -4,6 +4,7 @@ import os
 import sys
 from typing import Dict, Optional, Union
 import gitlab
+
 from .constants import (
     CHECKMARK,
     CROSS,
@@ -17,7 +18,22 @@ from .constants import (
     SEVERITY_CRITICAL,
     STANDARD_CODES,
 )
-from .standards import STANDARDS
+from .standards import (
+    PythonVersionStandard,
+    ProjectSpecStandard,
+    MakefileStandard,
+    NoCondaStandard,
+    LockFileStandard,
+)
+
+# List of all standards
+STANDARDS = [
+    PythonVersionStandard,
+    ProjectSpecStandard,
+    MakefileStandard,
+    NoCondaStandard,
+    LockFileStandard,
+]
 
 
 class GitLabChecker:

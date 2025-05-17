@@ -2,7 +2,7 @@ import gitlab
 from .base import BaseStandard
 
 
-class ProjectSpec(BaseStandard):
+class ProjectSpecStandard(BaseStandard):
     """Project specification standard."""
 
     code = "PY002"

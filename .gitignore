@@ -57,3 +57,8 @@ coverage.xml
 # Logs
 *.log
 logs/
+
+# Static analysis & formatting
+.mypy_cache/
+.pylint.d/
+.black_cache/
