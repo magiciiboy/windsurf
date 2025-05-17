@@ -13,10 +13,16 @@ class Makefile(BaseStandard):
     standard_type = "file"
 
     @classmethod
-    def check(cls, project_id: str, checker: 'GitLabChecker') ->dict:
+    def check(cls, gl: 'gitlab.Gitlab', project_id: str) -> dict:
         """Check for Makefile."""
-        has_makefile = checker._check_makefile(project_id)
+        has_makefile = cls._check_makefile(gl, project_id)
         return {
             "meets_standard": has_makefile,
             "detected_version": "present" if has_makefile else "not found"
         }
+
+    @classmethod
+    def _check_makefile(cls, gl: 'gitlab.Gitlab', project_id: str) -> bool:
+        """Check if project has a Makefile at root level."""
+        files = cls.get_repository_files(gl, project_id)
+        return "Makefile" in files

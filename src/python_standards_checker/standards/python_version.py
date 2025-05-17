@@ -13,9 +13,9 @@ class PythonVersion(BaseStandard):
     standard_type = "version"
 
     @classmethod
-    def check(cls, project_id: str, checker: 'GitLabChecker') -> dict:
+    def check(cls, gl: 'gitlab.Gitlab', project_id: str) -> dict:
         """Check Python version requirement."""
-        python_version = checker.get_python_version(project_id)
+        python_version = cls.get_python_version(gl, project_id)
         return {
             "meets_standard": python_version and cls.is_version_supported(python_version),
             "detected_version": python_version

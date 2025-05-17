@@ -13,10 +13,24 @@ class LockFile(BaseStandard):
     standard_type = "file"
 
     @classmethod
-    def check(cls, project_id: str, checker: 'GitLabChecker') -> dict:
+    def check(cls, gl: 'gitlab.Gitlab', project_id: str) -> dict:
         """Check for lock file."""
-        has_lock_file = checker._check_lock_file(project_id)
+        has_lock_file = cls._check_lock_file(gl, project_id)
         return {
             "meets_standard": has_lock_file,
             "detected_version": "present" if has_lock_file else "not found"
         }
+
+    @classmethod
+    def _check_lock_file(cls, gl: 'gitlab.Gitlab', project_id: str) -> bool:
+        """Check if project has a lock file (requirements.txt, poetry.lock, or pip-tools requirements.in)."""
+        files = cls.get_repository_files(gl, project_id)
+        
+        # Check for common lock files
+        lock_files = [
+            "requirements.txt",
+            "poetry.lock",
+            "requirements.in"  # pip-tools
+        ]
+        
+        return any(file in files for file in lock_files)

@@ -1,6 +1,6 @@
 from .base import BaseStandard
 from .python_version import PythonVersion
-from .pyproject_toml import PyprojectToml
+from .project_spec import ProjectSpec
 from .makefile import Makefile
 from .no_conda import NoConda
 from .lock_file import LockFile
@@ -8,7 +8,7 @@ from .lock_file import LockFile
 # List of all standards
 STANDARDS = [
     PythonVersion,
-    PyprojectToml,
+    ProjectSpec,
     Makefile,
     NoConda,
     LockFile
@@ -17,7 +17,7 @@ STANDARDS = [
 __all__ = [
     "BaseStandard",
     "PythonVersion",
-    "PyprojectToml",
+    "ProjectSpec",
     "Makefile",
     "NoConda",
     "LockFile",
