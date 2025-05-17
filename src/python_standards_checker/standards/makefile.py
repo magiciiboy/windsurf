@@ -18,7 +18,7 @@ class Makefile(BaseStandard):
         has_makefile = cls._check_makefile(gl, project_id)
         return {
             "meets_standard": has_makefile,
-            "detected_version": "present" if has_makefile else "not found"
+            "value": "present" if has_makefile else "not found"
         }
 
     @classmethod

@@ -87,7 +87,7 @@ The tests will use the first available environment variable in the following ord
   "python_version": {
     "standard": ">3.8",
     "meets_standard": true,
-    "detected_version": "3.11"
+    "value": "3.11"
   },
   "pyproject_toml": {
     "standard": "required",

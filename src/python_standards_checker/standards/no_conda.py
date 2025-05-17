@@ -19,7 +19,7 @@ class NoConda(BaseStandard):
         uses_conda = cls._check_conda_usage(gl, project_id)
         return {
             "meets_standard": not uses_conda,
-            "detected_version": "not found" if not uses_conda else "found conda usage"
+            "value": "not found" if not uses_conda else "found conda usage"
         }
 
     @classmethod

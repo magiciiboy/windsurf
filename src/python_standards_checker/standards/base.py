@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, List
-from packaging import version
+from functools import lru_cache
 
 
 class BaseStandard(ABC):
@@ -51,33 +51,14 @@ class BaseStandard(ABC):
         Returns:
             Dict containing:
             - meets_standard: bool
-            - detected_version: str (if applicable)
+            - value: str (if applicable)
         """
         pass
 
-    @classmethod
-    def is_version_supported(cls, version_spec: str) -> bool:
-        """Check if a version specification meets the minimum requirement."""
-        if not version_spec:
-            return False
-        
-        try:
-            # Extract the actual version number from version specifiers
-            if version_spec.startswith(('>=', '>', '~=')):
-                version_str = version_spec.split(',')[0].split(' ')[0]
-            elif version_spec == '==3.9':
-                version_str = '3.9'
-            elif version_spec == '!=3.8':
-                return True
-            else:
-                version_str = version_spec
-            
-            # Compare with minimum requirement
-            return version.parse(version_str) >= version.parse('3.9')
-        except Exception:
-            return False
+
 
     @classmethod
+    @lru_cache(maxsize=128)
     def get_repository_files(cls, gl: 'gitlab.Gitlab', project_id: str) -> List[str]:
         """Get list of files from GitLab repository.
         
@@ -87,6 +68,10 @@ class BaseStandard(ABC):
             
         Returns:
             List of file names in the repository
+            
+        Note:
+            This method uses LRU caching to avoid redundant API calls when multiple
+            standards check the same files. The cache size is set to 128 projects.
         """
         project = gl.projects.get(project_id)
         items = project.repository_tree(all=True, recursive=True)

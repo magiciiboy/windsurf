@@ -1,5 +1,5 @@
 import pytest
-from python_standards_checker import GitLabChecker
+from python_standards_checker.utils import is_version_supported
 
 @pytest.mark.parametrize(
     "version_spec, expected",
@@ -36,6 +36,5 @@ from python_standards_checker import GitLabChecker
 )
 def test_is_version_supported(version_spec, expected):
     """Test the is_version_supported function with various version specifications."""
-    checker = GitLabChecker()
-    result = checker.is_version_supported(version_spec)
+    result = is_version_supported(version_spec)
     assert result == expected, f"Expected {expected} for version spec: {version_spec}"

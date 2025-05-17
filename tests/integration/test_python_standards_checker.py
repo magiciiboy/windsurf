@@ -2,6 +2,7 @@ import os
 import json
 import pytest
 from python_standards_checker import GitLabChecker
+from python_standards_checker.utils import is_version_supported
 
 @pytest.fixture
 def gitlab_checker():
@@ -32,7 +33,7 @@ def test_check_standards(gitlab_checker, test_project_id):
         assert isinstance(python_version, dict)
         assert "standard" in python_version
         assert "meets_standard" in python_version
-        assert "detected_version" in python_version
+        assert "value" in python_version
         
         # Test various Python version specifications
         version_specifications = [
@@ -51,9 +52,9 @@ def test_check_standards(gitlab_checker, test_project_id):
         ]
         
         for spec, expected in version_specifications:
-            python_version["detected_version"] = spec
+            python_version["value"] = spec
             # Use the public function for testing
-            meets_standard = checker.is_version_supported(spec)
+            meets_standard = is_version_supported(spec)
             assert meets_standard == expected
         
         pyproject_toml = standards["pyproject_toml"]

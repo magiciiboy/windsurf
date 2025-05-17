@@ -1,5 +1,6 @@
+from python_standards_checker.utils import is_version_supported
+
 from .base import BaseStandard
-from typing import Optional
 
 
 class PythonVersion(BaseStandard):
@@ -17,6 +18,6 @@ class PythonVersion(BaseStandard):
         """Check Python version requirement."""
         python_version = cls.get_python_version(gl, project_id)
         return {
-            "meets_standard": python_version and cls.is_version_supported(python_version),
-            "detected_version": python_version
+            "meets_standard": python_version and is_version_supported(python_version),
+            "value": python_version
         }

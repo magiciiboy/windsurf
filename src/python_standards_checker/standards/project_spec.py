@@ -18,7 +18,7 @@ class ProjectSpec(BaseStandard):
         has_project_spec = cls._check_project_spec(gl, project_id)
         return {
             "meets_standard": has_project_spec,
-            "detected_version": "present" if has_project_spec else "not found"
+            "value": "present" if has_project_spec else "not found"
         }
 
     @classmethod

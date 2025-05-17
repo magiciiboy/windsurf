@@ -18,7 +18,7 @@ class LockFile(BaseStandard):
         has_lock_file = cls._check_lock_file(gl, project_id)
         return {
             "meets_standard": has_lock_file,
-            "detected_version": "present" if has_lock_file else "not found"
+            "value": "present" if has_lock_file else "not found"
         }
 
     @classmethod
