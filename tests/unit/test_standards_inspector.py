@@ -1,5 +1,5 @@
 import pytest
-from python_standards_checker.utils import is_version_supported, get_min_version
+from standards_inspector.utils import is_version_supported, get_min_version
 
 
 @pytest.mark.parametrize(

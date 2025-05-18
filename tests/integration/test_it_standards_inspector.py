@@ -1,8 +1,8 @@
 import os
 import pytest
-from python_standards_checker import PythonStandardsChecker
-from python_standards_checker.repositories import GitLabRepository
-from python_standards_checker.utils import is_version_supported, get_min_version
+from standards_inspector import StandardsInspector
+from standards_inspector.repositories import GitLabRepository
+from standards_inspector.utils import is_version_supported, get_min_version
 
 
 @pytest.fixture
@@ -12,7 +12,7 @@ def gitlab_checker():
     url = os.getenv("GITLAB_TEST_URL") or os.getenv("GITLAB_URL", "https://gitlab.com")
     if not token:
         pytest.skip("GITLAB_TEST_TOKEN or GITLAB_TOKEN environment variable not set")
-    return PythonStandardsChecker(GitLabRepository(url, token, test_project_id))
+    return StandardsInspector(GitLabRepository(url, token, test_project_id))
 
 
 @pytest.fixture

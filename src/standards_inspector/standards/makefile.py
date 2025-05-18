@@ -1,4 +1,4 @@
-from python_standards_checker.repositories import BaseRepository
+from standards_inspector.repositories import BaseRepository
 
 from .base import BaseStandard
 

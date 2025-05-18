@@ -1,5 +1,5 @@
-from python_standards_checker.utils import is_version_supported
-from python_standards_checker.repositories import BaseRepository
+from standards_inspector.utils import is_version_supported
+from standards_inspector.repositories import BaseRepository
 
 from .base import BaseStandard
 

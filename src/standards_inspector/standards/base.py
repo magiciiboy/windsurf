@@ -6,9 +6,9 @@ from functools import lru_cache
 import pytoml
 from packaging import version as semver
 
-from python_standards_checker.utils import get_min_version
-from python_standards_checker.repositories import BaseRepository
-from python_standards_checker.constants import (
+from standards_inspector.utils import get_min_version
+from standards_inspector.repositories import BaseRepository
+from standards_inspector.constants import (
     PYTHON_REQUIRES_REGEX,
     PYTHON_COMMAND_REGEX,
     PYTHON_REGEX,

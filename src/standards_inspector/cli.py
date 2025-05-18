@@ -36,8 +36,8 @@ STANDARDS = [
 ]
 
 
-class PythonStandardsChecker:
-    """A class to check Python standards in repositories.
+class StandardsInspector:
+    """A class to check standards in repositories.
 
     This class provides methods to check various Python coding standards in a specified repository.
     It supports both GitLab repositories and local directories.
@@ -48,7 +48,7 @@ class PythonStandardsChecker:
     """
 
     def __init__(self, repository: BaseRepository):
-        """Initialize the PythonStandardsChecker with a repository instance.
+        """Initialize the StandardsInspector with a repository instance.
 
         Args:
             repository: Repository instance to check standards against
@@ -204,7 +204,7 @@ def main():
             repository = LocalRepository(args.directory_path)
 
         # Create checker with repository
-        checker = PythonStandardsChecker(repository)
+        checker = StandardsInspector(repository)
 
         results = checker.check_standards(
             standards=filtered_standards, output_format=args.output_format

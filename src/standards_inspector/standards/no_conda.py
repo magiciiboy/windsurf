@@ -1,5 +1,5 @@
-from python_standards_checker.constants import CONDA_FILES
-from python_standards_checker.repositories import BaseRepository
+from standards_inspector.constants import CONDA_FILES
+from standards_inspector.repositories import BaseRepository
 
 from .base import BaseStandard
 

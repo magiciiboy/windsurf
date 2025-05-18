@@ -1,12 +1,12 @@
-# Python Standards Checker
+# StandardsInspector
 
-A CLI tool to check Python standards in GitLab repositories.
+A tool to check projects against established standards and best practices.
 
 ## Project Structure
 
 ```
 src/
-└── python_standards_checker/
+└── standards_inspector/
     ├── __init__.py
     ├── constants.py
     ├── standards/
@@ -47,10 +47,10 @@ pip install .
 
 ```bash
 # Check GitLab repository
-python-standards-checker --source gitlab --project-id <project_id> [--token <gitlab_token>] [--url <gitlab_url>]
+standards-inspector --source gitlab --project-id <project_id> [--token <gitlab_token>] [--url <gitlab_url>]
 
 # Check local directory
-python-standards-checker --source local --directory <directory_path>
+standards-inspector --source local --directory <directory_path>
 ```
 
 ### Environment Variables
