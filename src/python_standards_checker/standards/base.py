@@ -4,15 +4,15 @@ from typing import Optional, Union, Dict
 from functools import lru_cache
 
 import pytoml
+from packaging import version as semver
 
 from python_standards_checker.utils import get_min_version
 from python_standards_checker.repositories import BaseRepository
-
-
-PYTHON_REQUIRES_REGEX = re.compile(
-    r"python_requires=(?P<operator>\^|~=|==|!=|<=|>=|<|>|=|~)?\s*(?P<version>\d+(\.\d+){0,2}([a-zA-Z0-9]+)?)"
+from python_standards_checker.constants import (
+    PYTHON_REQUIRES_REGEX,
+    PYTHON_COMMAND_REGEX,
+    PYTHON_REGEX,
 )
-PYTHON_REGEX = re.compile(r"python:\s*(?P<version>\d+(\.\d+){0,2}([a-zA-Z0-9]+)?)")
 
 
 class BaseStandard(ABC):
@@ -135,12 +135,32 @@ class BaseStandard(ABC):
             Python version string if found, None otherwise
         """
         files = repository.get_files()
+        possible_versions = []
 
         # Check Dockerfile
         if "Dockerfile" in files:
             content = repository.read_file_content("Dockerfile").decode()
             match = re.search(PYTHON_REGEX, str(content))
             if match:
-                return get_min_version(match.group("version"))
+                possible_versions.append(get_min_version(match.group("version")))
+
+        # Check shell scripts for conda commands
+        for file in files:
+            if file.endswith(".sh"):
+                try:
+                    content = repository.read_file_content(file).decode()
+                    match = re.search(PYTHON_COMMAND_REGEX, str(content))
+                    if match:
+                        possible_versions.append(
+                            get_min_version(match.group("version"))
+                        )
+                except Exception as e:
+                    print(f"Error checking file {file}: {str(e)}")
+                    continue
+
+        # Sorted possible versions by semver, get the lowest version
+        if possible_versions:
+            versions: list[str] = list(filter(None, possible_versions))
+            return sorted(versions, key=semver.parse)[0]
 
         return None

@@ -1,3 +1,5 @@
+import re
+
 # ANSI color codes for terminal output
 CHECKMARK = "\u2713"  # ✓
 CROSS = "\u2717"  # ✗
@@ -104,3 +106,13 @@ CONDA_FILES = ["environment.yml", ".condarc", "*.conda", "*.yml", "*.yaml"]
 
 # GitLab CI files
 CI_FILES = [".gitlab-ci.yml", ".gitlab-ci.yaml"]
+
+
+# Regex patterns
+PYTHON_REQUIRES_REGEX = re.compile(
+    r"python_requires=(?P<operator>\^|~=|==|!=|<=|>=|<|>|=|~)?\s*(?P<version>\d+(\.\d+){0,2}([a-zA-Z0-9]+)?)"
+)
+PYTHON_COMMAND_REGEX = re.compile(
+    r"python(?P<version>\d+(\.\d+){1,2}([a-zA-Z0-9]+)?)\s"
+)
+PYTHON_REGEX = re.compile(r"python:\s*(?P<version>\d+(\.\d+){0,2}([a-zA-Z0-9]+)?)")

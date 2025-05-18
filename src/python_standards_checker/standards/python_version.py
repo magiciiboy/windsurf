@@ -24,4 +24,8 @@ class PythonVersionStandard(BaseStandard):
             "meets_standard": python_version
             and is_version_supported(python_version, cls.standard),
             "value": python_version,
+            "additional_info": {
+                "min_spec_version": cls.get_python_min_spec_version(repository),
+                "min_runtime_version": cls.get_python_min_runtime_version(repository),
+            },
         }
