@@ -1,4 +1,5 @@
 from typing import List
+from functools import lru_cache
 
 from gitlab import Gitlab
 from gitlab.v4.objects import Project
@@ -42,6 +43,7 @@ class GitLabRepository(BaseRepository):
                     f"Failed to access project ID {self.project_id}: {str(e)}"
                 ) from e
 
+    @lru_cache(maxsize=128)
     def read_file_content(self, file_path: str) -> bytes:
         """Read content of a file from GitLab repository.
 
@@ -64,11 +66,15 @@ class GitLabRepository(BaseRepository):
         except Exception as e:
             raise ValueError(f"Failed to read file {file_path}: {str(e)}") from e
 
+    @lru_cache(maxsize=1)
     def get_files(self) -> List[str]:
         """Get list of files in the GitLab repository.
 
         Returns:
             List[str]: List of file paths in the repository
+
+        Raises:
+            ValueError: If project is not initialized
         """
         if not self.gl or not self.project:
             raise ValueError(
@@ -84,3 +90,8 @@ class GitLabRepository(BaseRepository):
             ]
         except Exception as e:
             raise ValueError(f"Failed to get repository files: {str(e)}") from e
+
+    def clear_cache(self) -> None:
+        """Clear the cache for file operations."""
+        self.get_files.cache_clear()
+        self.read_file_content.cache_clear()

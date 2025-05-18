@@ -10,8 +10,11 @@ class LockFileStandard(BaseStandard):
     category = "Dependency Management"
     standard = True
     severity = "RECOMMENDATION"
-    description = "Project SHOULD have a lock file (poetry.lock, pip-tools requirements.in, requirements.txt)"
-    recommendation = "Create a lock file to ensure consistent dependency versions across environments"
+    description = "Project SHOULD have a lock file"
+    recommendation = (
+        "Create a lock file to ensure consistent dependency versions across environments. "
+        + "Use poetry.lock, pip-tools requirements.in, requirements.txt, or any other lock file format."
+    )
     standard_type = "file"
 
     @classmethod

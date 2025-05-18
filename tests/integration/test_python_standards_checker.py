@@ -2,7 +2,7 @@ import os
 import pytest
 from python_standards_checker import PythonStandardsChecker
 from python_standards_checker.repositories import GitLabRepository
-from python_standards_checker.utils import is_version_supported
+from python_standards_checker.utils import is_version_supported, get_min_version
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def test_check_standards(gitlab_checker, test_project_id):
         for spec, expected in version_specifications:
             python_version["value"] = spec
             # Use the public function for testing
-            meets_standard = is_version_supported(spec)
+            meets_standard = is_version_supported(get_min_version(spec), "3.9")
             assert meets_standard == expected
 
         pyproject_toml = standards["pyproject_toml"]

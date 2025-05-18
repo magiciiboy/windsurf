@@ -63,11 +63,11 @@ class PythonStandardsChecker:
                 emoji = CHECKMARK
                 color = GREEN
             else:
-                emoji = CROSS
-                color = RED
+                emoji = WARNING
+                color = ORANGE
                 if result["severity"] == SEVERITY_CRITICAL:
-                    emoji = WARNING
-                    color = ORANGE
+                    emoji = CROSS
+                    color = RED
 
             output += f"[{color}{emoji}{RESET}] [{code}] {result['description']}\n"
             if not result["meets_standard"]:

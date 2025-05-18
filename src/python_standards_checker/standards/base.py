@@ -1,9 +1,18 @@
 import re
 from abc import ABC, abstractmethod
 from typing import Optional, Union, Dict
+from functools import lru_cache
+
 import pytoml
 
+from python_standards_checker.utils import get_min_version
 from python_standards_checker.repositories import BaseRepository
+
+
+PYTHON_REQUIRES_REGEX = re.compile(
+    r"python_requires=(?P<operator>\^|~=|==|!=|<=|>=|<|>|=|~)?\s*(?P<version>\d+(\.\d+){0,2}([a-zA-Z0-9]+)?)"
+)
+PYTHON_REGEX = re.compile(r"python:\s*(?P<version>\d+(\.\d+){0,2}([a-zA-Z0-9]+)?)")
 
 
 class BaseStandard(ABC):
@@ -58,7 +67,34 @@ class BaseStandard(ABC):
         raise NotImplementedError("Subclasses must implement this method")
 
     @classmethod
+    @lru_cache(maxsize=1)
     def get_python_version(cls, repository: BaseRepository) -> Optional[str]:
+        """Detect Python version from various files.
+
+        Args:
+            repository: Repository instance
+
+        Returns:
+            Python version string if found, None otherwise
+        """
+
+        min_runtime_version = cls.get_python_min_runtime_version(repository)
+        min_spec_version = cls.get_python_min_spec_version(repository)
+
+        if min_runtime_version and min_spec_version:
+            return min(min_runtime_version, min_spec_version)
+
+        if min_runtime_version:
+            return min_runtime_version
+
+        if min_spec_version:
+            return min_spec_version
+
+        return None
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def get_python_min_spec_version(cls, repository: BaseRepository) -> Optional[str]:
         """Detect Python version from various files.
 
         Args:
@@ -74,19 +110,37 @@ class BaseStandard(ABC):
             content = repository.read_file_content("pyproject.toml").decode()
             toml_data = pytoml.loads(content)
             if "project" in toml_data and "requires-python" in toml_data["project"]:
-                return toml_data["project"]["requires-python"]
+                return get_min_version(toml_data["project"]["requires-python"])
 
         # Check setup.py
         if "setup.py" in files:
             content = repository.read_file_content("setup.py").decode()
-            match = re.search(r'python_requires="(>=3\.\d+)"', str(content))
+            match = re.search(PYTHON_REQUIRES_REGEX, str(content))
             if match:
-                return match.group(1)
+                return get_min_version(match.group("version"))
+
+        return None
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def get_python_min_runtime_version(
+        cls, repository: BaseRepository
+    ) -> Optional[str]:
+        """Detect Python version from various files.
+
+        Args:
+            repository: Repository instance
+
+        Returns:
+            Python version string if found, None otherwise
+        """
+        files = repository.get_files()
 
         # Check Dockerfile
         if "Dockerfile" in files:
             content = repository.read_file_content("Dockerfile").decode()
-            match = re.search(r"python:(3\.\d+)", str(content))
+            match = re.search(PYTHON_REGEX, str(content))
             if match:
-                return match.group(1)
+                return get_min_version(match.group("version"))
+
         return None

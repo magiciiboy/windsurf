@@ -47,16 +47,27 @@ pip install .
 
 ```bash
 # Check GitLab repository
-python-standards-checker <project_id> [--token <gitlab_token>] [--url <gitlab_url>]
+python-standards-checker --source gitlab --project-id <project_id> [--token <gitlab_token>] [--url <gitlab_url>]
 
 # Check local directory
-python-standards-checker <directory_path> --directory
+python-standards-checker --source local --directory <directory_path>
 ```
 
 ### Environment Variables
 
 - `GITLAB_TOKEN`: GitLab private token (for GitLab mode)
 - `GITLAB_URL`: GitLab instance URL (defaults to https://gitlab.com) (for GitLab mode)
+
+### Command-Line Options
+
+- `--source`: Source type (gitlab or local)
+- `--project-id`: GitLab project ID or URL (required for GitLab source)
+- `--token`: GitLab private token (can also use GITLAB_TOKEN env var)
+- `--url`: GitLab instance URL (defaults to https://gitlab.com)
+- `--directory`: Path to local directory to check (required for local source)
+- `--include`: Include specific standards to check (comma-separated list)
+- `--exclude`: Exclude specific standards from check (comma-separated list)
+- `--format`: Output format (json or checklist)
 
 ```bash
 export GITLAB_TOKEN=your_token_here
